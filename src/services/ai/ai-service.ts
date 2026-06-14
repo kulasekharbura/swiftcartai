@@ -48,6 +48,26 @@ export class AIServiceLayer {
     } as ParsedIntent;
   }
 
+  async parseMultiIntent(
+    description: string,
+    context?: Record<string, unknown>
+  ): Promise<ParsedIntent[]> {
+    const prompt = buildIntentPrompt(description, context);
+    const response = await this.provider.sendPrompt(prompt, { responseFormat: 'json' });
+    const parsed = JSON.parse(response.content);
+
+    const intents = Array.isArray(parsed.intents) ? parsed.intents : [parsed];
+    return intents.map((intent: Record<string, unknown>) => ({
+      occasionType: (intent.occasionType as string) ?? 'general',
+      groupSize: (intent.groupSize as number) ?? 1,
+      constraints: (intent.constraints as string[]) ?? [],
+      preferences: (intent.preferences as string[]) ?? [],
+      rawDescription: description,
+      additionalContext: context,
+      intentCategory: (intent.intentCategory as string) ?? 'general',
+    } as ParsedIntent));
+  }
+
   async generateCart(intent: ParsedIntent): Promise<CartItem[]> {
     const prompt = buildCartPrompt(intent);
     const response = await this.provider.sendPrompt(prompt, {

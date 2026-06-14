@@ -49,3 +49,13 @@ export interface HouseholdProfile {
   diet: 'vegetarian' | 'non-vegetarian' | 'vegan';
   budget: 'budget' | 'standard' | 'premium';
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  imageUrl?: string | null;
+  inStock: boolean;
+}
