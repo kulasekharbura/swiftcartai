@@ -15,11 +15,11 @@ import { Sparkles } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
-  const { addItem, setCart, setItems, setIntentLabels, setLastDescription, userId, householdProfile, setHouseholdProfile } = useCart();
+  const { addItem, setCart, setItems, setIntentLabels, setLastDescription, userId, householdProfile, setHouseholdProfile, items, intentLabels: existingLabels } = useCart();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cartItemNames = new Set(useCart().items.map(i => i.productName.toLowerCase()));
+  const cartItemNames = new Set(items.map(i => i.productName.toLowerCase()));
 
   const handleSubmit = async (description: string) => {
     setIsLoading(true);
@@ -46,8 +46,35 @@ export default function HomePage() {
       if (!data.success) throw new Error(data.error || 'Failed to generate cart');
 
       setCart(data.cart);
-      setItems(data.cart.items);
-      setIntentLabels(data.intentLabels || []);
+      
+      // MERGE: append new items to existing cart (don't replace)
+      const newItems = data.cart.items;
+      if (items.length > 0) {
+        // Merge: combine duplicates by product name
+        const merged = [...items];
+        for (const newItem of newItems) {
+          const existingIndex = merged.findIndex(
+            i => i.productName.toLowerCase() === newItem.productName.toLowerCase()
+          );
+          if (existingIndex >= 0) {
+            // Duplicate found — add quantities
+            merged[existingIndex] = {
+              ...merged[existingIndex],
+              quantity: merged[existingIndex].quantity + newItem.quantity,
+            };
+          } else {
+            merged.push(newItem);
+          }
+        }
+        setItems(merged);
+      } else {
+        setItems(newItems);
+      }
+      
+      // Append new intent labels to existing ones
+      const newLabels = data.intentLabels || [];
+      const combinedLabels = [...existingLabels, ...newLabels.filter((l: string) => !existingLabels.includes(l))];
+      setIntentLabels(combinedLabels);
 
       // Navigate to cart page
       router.push('/cart');
