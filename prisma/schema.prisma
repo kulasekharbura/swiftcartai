@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  description   String
+  parsedIntent  String         // JSON-serialized ParsedIntent
+  createdAt     DateTime       @default(now())
+  approvedItems ApprovedItem[]
+}
+
+model ApprovedItem {
+  id             String  @id @default(cuid())
+  sessionId      String
+  session        Session @relation(fields: [sessionId], references: [id])
+  productName    String
+  quantity       Int
+  estimatedPrice Float
+  category       String
+  reasoning      String
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  price       Float
+  imageUrl    String?
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
