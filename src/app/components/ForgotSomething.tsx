@@ -33,7 +33,8 @@ export function ForgotSomething({ onAddItem, onFinalize }: ForgotSomethingProps)
       setTimeLeft(prev => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          onFinalize();
+          // Defer onFinalize to avoid setState-during-render
+          setTimeout(() => onFinalize(), 0);
           return 0;
         }
         return prev - 1;
